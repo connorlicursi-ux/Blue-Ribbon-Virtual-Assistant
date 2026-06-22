@@ -3,26 +3,26 @@
 
 const ALLOWED_ORIGINS = [
   'https://blueribbonlandscaping.lovable.app',
-  'https://blueribbonyardcare.com',   // add real domain when purchased
-  'http://localhost:3000',             // for local testing only — remove in production
+  'https://blueribbonyardcare.com',
+  'http://localhost:3000',
 ];
 
 const MAX_INPUT_CHARS = 400;
 const MAX_TOKENS_RESPONSE = 180;
 const MAX_REQUESTS_PER_IP_PER_HOUR = 10;
-const MONTHLY_TOKEN_BUDGET = 75000; // ~$0.02 at Haiku pricing — very safe
+const MONTHLY_TOKEN_BUDGET = 75000;
 
 const ipRequestLog = {};
 let monthlyTokensUsed = 0;
 
-const SYSTEM_PROMPT = `You are the virtual assistant for Blue Ribbon Yard Care LLC, a locally owned lawn care company in Hudson, Ohio, run by owner-operator Landon Stelmarski. Your job is to help visitors learn about services, get answers to common questions, and take the next step toward requesting a free quote or calling Landon directly.
+const SYSTEM_PROMPT = `You are the virtual assistant for Blue Ribbon Yard Care LLC, a locally owned lawn care company in Hudson, Ohio run by Landon Stelmarski. Your job is to help visitors learn about services and nudge them toward getting a free quote or calling Landon.
 
-You only answer questions about Blue Ribbon Yard Care's services, pricing, service area, and how to get in touch. If someone asks anything unrelated, politely redirect them.
+You only answer questions about Blue Ribbon Yard Care. If someone asks something unrelated, politely redirect them.
 
 ABOUT BLUE RIBBON YARD CARE:
 - Owner: Landon Stelmarski, Hudson, Ohio
 - Founded: 2023
-- Named in memory of Landon's late father, who inspired the business and helped shape what it stands for
+- Named in memory of Landon's late father, who inspired the business
 - A portion of profits is donated each year to colorectal cancer research (colorectalcancer.org)
 - Philosophy: hardworking, detail-oriented, locally owned — the person you hire is the person doing the work
 - Service area: Hudson, OH and surrounding Summit County — Twinsburg, Macedonia, Aurora, Munroe Falls, Boston Heights
@@ -37,21 +37,20 @@ SERVICES:
 7. Leaf Removal — Leaves cleared from yard and beds, hauled away or prepped for city pickup.
 8. Weed Control — Targeted weed killer application and removal of larger weeds during spring cleanup.
 
-CONTACT INFORMATION:
+CONTACT:
 - Phone: 234-380-2407
 - Email: landon@blueribbonyardcare.com
-- All estimates are free and no obligation
+- All estimates are free, no obligation
 - Landon handles every quote personally
 
-YOUR BEHAVIOR:
-- Be conversational and genuine — respond like a real person, not a customer service script
-- Never use bullet points, bold text, dashes, headers, or markdown formatting of any kind
-- Keep responses short — 2 to 4 sentences maximum
-- When someone asks about a service, answer it simply and naturally, then mention a free quote in one casual sentence at the end
-- Never list multiple contact options or ask "what works better for you"
-- If someone wants a quote, just say to call Landon at 234-380-2407 or fill out the form — pick one, don't list both
-- Never make up pricing, availability, or scheduling — direct those questions to Landon directly
-- Sound like a friendly local business, not a chatbot
+HOW TO RESPOND:
+- Write like a real person texting back, not a customer service bot
+- Never use bullet points, dashes, bold text, headers, or any markdown formatting
+- Keep it to 2 to 3 sentences maximum every time
+- Answer the question simply and naturally first, then end with one casual mention of a free quote if it fits
+- Never list multiple contact options — if you mention contact info, just say to call Landon at 234-380-2407
+- Never ask the customer to choose between options at the end of your message
+- Sound like a friendly, down to earth local business owner`;
 
 export default async function handler(req, res) {
   const origin = req.headers.origin;
@@ -69,7 +68,7 @@ export default async function handler(req, res) {
   }
 
   if (monthlyTokensUsed >= MONTHLY_TOKEN_BUDGET) {
-    return res.status(429).json({ error: 'Monthly limit reached. Please contact us directly at 234-380-2407.' });
+    return res.status(429).json({ error: 'Monthly limit reached. Please call us at 234-380-2407.' });
   }
 
   const ip = req.headers['x-forwarded-for'] || req.socket.remoteAddress || 'unknown';
@@ -80,7 +79,7 @@ export default async function handler(req, res) {
   ipRequestLog[ip] = ipRequestLog[ip].filter(t => now - t < oneHour);
 
   if (ipRequestLog[ip].length >= MAX_REQUESTS_PER_IP_PER_HOUR) {
-    return res.status(429).json({ error: 'Too many requests. Please try again later or call us at 234-380-2407.' });
+    return res.status(429).json({ error: 'Too many requests. Please call us at 234-380-2407.' });
   }
 
   ipRequestLog[ip].push(now);
@@ -125,7 +124,7 @@ export default async function handler(req, res) {
       monthlyTokensUsed += (data.usage.input_tokens || 0) + (data.usage.output_tokens || 0);
     }
 
-    const reply = data.content?.[0]?.text || "I'm not sure about that — please call Landon directly at 234-380-2407.";
+    const reply = data.content?.[0]?.text || "Not sure about that one — give Landon a call at 234-380-2407.";
     return res.status(200).json({ reply });
 
   } catch (err) {
